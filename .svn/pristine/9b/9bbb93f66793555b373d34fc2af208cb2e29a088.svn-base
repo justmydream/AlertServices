@@ -1,0 +1,45 @@
+
+    <AbsoluteLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:background="#000000"
+        android:id="@+id/frame_root"
+         >
+
+        <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_x="-3dp"
+            android:layout_y="53dp"
+            android:src="@drawable/mainfirst" />
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_x="-3dp"
+            android:layout_y="387dp"
+            android:src="@drawable/warning" />
+
+        <ProgressBar
+            android:id="@+id/progressBar1"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_x="16dp"
+            android:layout_y="330dp" />
+
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="266dp"
+            android:layout_height="356dp"
+            android:layout_x="16dp"
+            android:layout_y="136dp"
+            android:text="긴급 알림이"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#FF8C00"
+          	android:textStyle="bold"
+            android:textSize="80dp" />
+
+    </AbsoluteLayout>

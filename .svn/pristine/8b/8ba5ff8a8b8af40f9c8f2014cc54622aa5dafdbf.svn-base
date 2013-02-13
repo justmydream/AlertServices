@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/settingText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#000000"
+        android:gravity="center_horizontal"
+        android:text="연락처 추가"
+        android:textColor="#FFFFFF"
+        android:textSize="35sp"
+        android:textStyle="bold"
+        app:context=".MainSetting" />
+
+    <ListView
+        android:id="@+id/addressList"
+        android:layout_width="match_parent"
+        android:layout_height="354dp"
+        android:layout_weight="0.38" >
+    </ListView>
+
+    <Button
+        android:id="@+id/contactBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="연락처 추가" />
+
+    <Button
+        android:id="@+id/addressFin"
+        android:layout_width="76dp"
+        android:layout_height="wrap_content"
+        android:text="확인" />
+
+</LinearLayout>

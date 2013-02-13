@@ -1,0 +1,57 @@
+package com.example.alertservice;
+
+import android.app.AlertDialog;
+import android.app.TabActivity;
+import android.app.AlertDialog.Builder;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.Menu;
+import android.widget.TabHost;
+
+public class Mainpage extends TabActivity
+
+
+ {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_mainpage);
+        
+        
+        TabHost tabHost = getTabHost();
+        
+        tabHost.addTab(tabHost.newTabSpec("tag")
+          .setIndicator("긴급")
+          .setContent(new Intent(this, Firstpage.class)));
+        
+        tabHost.addTab(tabHost.newTabSpec("tag")
+          .setIndicator("설정")
+          .setContent(new Intent(this, MainSetting.class)));
+        
+        tabHost.addTab(tabHost.newTabSpec("tag")
+          .setIndicator("도움말")
+          .setContent(new Intent(this, MainHelp.class)));
+        
+        Intent i = new Intent(this, MainLocation.class);
+        
+        tabHost.addTab(tabHost.newTabSpec("tag")
+                .setIndicator("위치")
+                .setContent(i));                
+        
+        tabHost.addTab(tabHost.newTabSpec("tag")
+                .setIndicator("종료").setContent(new Intent(this, MainShutDown.class)));
+             
+        tabHost.setCurrentTab(0);
+
+        
+        
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.activity_mainpage, menu);
+        return true;
+    }
+}

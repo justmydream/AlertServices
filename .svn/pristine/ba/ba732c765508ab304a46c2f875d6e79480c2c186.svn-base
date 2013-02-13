@@ -1,0 +1,26 @@
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"  
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/settingText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:background="#000000"
+            android:text="설 정"
+            android:textColor="#FFFFFF"
+            android:textSize="35sp"
+            android:textStyle="bold"
+            tools:context=".MainSetting" />
+         
+    <ListView
+        android:id="@+id/settingList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+    >
+    </ListView>
+
+    </LinearLayout>

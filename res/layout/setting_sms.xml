@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/smsText"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="10sp"
+        android:gravity="top"
+        android:inputType="textMultiLine"
+        android:lines="6"
+        android:maxLength="80"
+        android:text="긴급상황입니다 확인부탁드려요."
+        android:textSize="18sp" />
+
+</LinearLayout>

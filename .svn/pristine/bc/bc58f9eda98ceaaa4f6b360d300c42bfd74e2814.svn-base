@@ -1,0 +1,24 @@
+
+    <AbsoluteLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/frame_root"
+         >
+
+        <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_x="-3dp"
+            android:layout_y="-22dp"
+            android:src="@drawable/intro" />
+
+        <ProgressBar
+            android:id="@+id/progressBar1"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_x="64dp"
+            android:layout_y="222dp" />
+
+    </AbsoluteLayout>

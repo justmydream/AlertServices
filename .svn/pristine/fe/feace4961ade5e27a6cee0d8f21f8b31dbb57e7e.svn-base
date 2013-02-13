@@ -1,0 +1,23 @@
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+
+        <ImageView
+            android:id="@+id/mainfirstView"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:scaleType="center"
+            android:background="#000000"
+            android:src="@drawable/mainfirst" />
+
+        <ProgressBar
+            android:id="@+id/progressBar1"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/mainfirstView"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="116dp" />
+
+    </RelativeLayout>

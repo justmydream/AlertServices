@@ -1,0 +1,1079 @@
+package com.example.alertservice;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.PendingIntent;
+import android.app.AlertDialog.Builder;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.location.Address;
+import android.location.Criteria;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationManager;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaRecorder;
+import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Message;
+import android.telephony.gsm.SmsManager;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class Firstpage extends Activity implements View.OnClickListener, OnCompletionListener {
+	
+	Firstpage self;
+	Handler handle = new Handler();
+	Timer timer;
+	
+	SharedPreferences pref ;
+	
+	//진동 매니저
+	SensorManager mSm;
+	
+	//사운드미터
+	SoundMeter sm;
+	
+	//서비스 실행여부
+	boolean service_check=false;
+	
+	//백그라운드 체크
+	boolean doBackground=false;
+	
+	//내위치체크
+	boolean domyLoc=false;
+	
+    //발신전체크
+	boolean popupCheck=false;
+    
+    //녹음하기체크
+	boolean doRecord=false;
+	
+	//진동민감도
+	int acceleroVolume;
+	
+	//소리민감도
+	int soundVolume;
+	
+	//파워버튼 활성화 수
+	int powerCount=0;
+	
+	//사운드 활성화
+	int soundavail=0;
+	//진동 활성화
+	int accelavail=0;
+	//녹음시간설정
+	int recTimeValue;
+	
+	//메세지전달가능
+	boolean SMSSendable=true;
+	//메세지 전달 가능시간
+	long DELAYTIMEVALUE=10000;
+	
+	boolean cdtIsStarted=false;
+	
+	boolean smssendfrompower = false;
+	
+	Button onNoff;
+	TextView state;
+	
+	
+	
+	
+
+	//녹음기능설정
+		private static final int REC_STOP = 0;
+		  private static final int RECORDING = 1;
+		  private static final int PLAY_STOP = 0;
+		  private static final int PLAYING = 1;
+		  private static final int PLAY_PAUSE = 2;
+		  
+		  private MediaRecorder mRecorder = null;
+		  private MediaPlayer mPlayer = null;
+		  private int mRecState = REC_STOP;
+		  private int mPlayerState = PLAY_STOP;
+		  private SeekBar mRecProgressBar, mPlayProgressBar;
+		  private Button mBtnStartRec, mBtnStartPlay, mBtnStopPlay;
+		  private String mFilePath, mFileName = "test.amr";
+		  private TextView mTvPlayMaxPoint;
+		  
+		  private int mCurRecTimeMs = 0;
+		  private int mCurProgressTimeDisplay = 0;
+		  
+		  //내위치보내기 선언
+		    double latPoint,lngPooint;
+		    Geocoder geocoder ;
+		    String locationProvider;
+		    LocationManager locationManager;
+		    Location location;
+		  
+		  // 녹음시 SeekBar처리
+		  Handler mProgressHandler = new Handler()
+		  {
+		    public void handleMessage(Message msg)
+		    {
+		      mCurRecTimeMs = mCurRecTimeMs + 100;
+		      mCurProgressTimeDisplay = mCurProgressTimeDisplay + 100;
+		      
+		      // 녹음시간이 음수이면 정지버튼을 눌러 정지시켰음을 의미하므로 
+		      // SeekBar는 그대로 정지시키고 레코더를 정지시킨다. 
+		      if (mCurRecTimeMs < 0)
+		      {}
+		      // 녹음시간이 아직 최대녹음제한시간보다 작으면 녹음중이라는 의미이므로
+		      // SeekBar의 위치를 옮겨주고 0.1초 후에 다시 체크하도록 한다. 
+		      else if (mCurRecTimeMs < 60000)
+		      {
+		        mRecProgressBar.setProgress(mCurProgressTimeDisplay);
+		        mProgressHandler.sendEmptyMessageDelayed(0, 100);
+		      }
+		      // 녹음시간이 최대 녹음제한 시간보다 크면 녹음을 정지 시킨다. 
+		      else
+		      {
+		        mBtnStartRecOnClick();
+		      }
+		    }
+		  };
+		  
+		  // 재생시 SeekBar 처리
+		  Handler mProgressHandler2 = new Handler()
+		  {
+		    public void handleMessage(Message msg)
+		    {
+		      if (mPlayer == null) return;
+		      
+		      try
+		      {
+		        if (mPlayer.isPlaying())
+		        {
+		          mPlayProgressBar.setProgress(mPlayer.getCurrentPosition());
+		          mProgressHandler2.sendEmptyMessageDelayed(0, 100);
+		        }
+		      }
+		      catch (IllegalStateException e)
+		      {}
+		      catch (Exception e)
+		      {}
+		    }
+		  };
+		  //좌표값을 이용하여 한글주소로처리
+		    public String getKoreanAddress(){
+		    	StringBuffer koreanAddress = new StringBuffer();  
+		    	
+		    	try {
+		    		List<Address> addresses;
+		        	
+					addresses = geocoder.getFromLocation(latPoint, lngPooint, 1);
+					for(Address addr: addresses){
+						int index = addr.getMaxAddressLineIndex();
+						for(int i=0;i<=index;i++){
+							koreanAddress.append(addr.getAddressLine(i));
+							koreanAddress.append("");
+							}
+						koreanAddress.append("\n");
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}    	
+		    		return koreanAddress.toString(); 	    	
+		    }
+	
+	
+	
+	/*
+	PowerManager.WakeLock wakelock;
+	PowerManager pm;*/
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        
+        
+        setContentView(R.layout.activity_firstpage);
+        self = this;
+        
+        
+        //화면 온/오프 필터
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        BroadcastReceiver mReceiver = new ScreenReceiver();
+        registerReceiver(mReceiver, filter);
+        
+        //진동민감도 매니저
+        mSm = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+        
+        //소리 민감도 클래스	
+        sm = new SoundMeter();
+        
+        onNoff = (Button)findViewById(R.id.OnAndOffBtn);
+        state = (TextView)findViewById(R.id.statetxt);
+        
+        
+        //실행상태 체크
+        pref = getSharedPreferences("PrefTest",MODE_PRIVATE);
+  		service_check = pref.getBoolean("service_check", false);
+  		
+  		
+  		
+  		if(service_check)
+  		{
+  			onNoff.setText("서비스 중지");
+			state.setText("서비스가 동작중입니다.");
+  		}
+  		else
+  		{
+  			onNoff.setText("서비스 시작");
+			state.setText("서비스가 정지중입니다.");
+  			sm.stop();
+			mSm.unregisterListener(mSensorListener);
+  		}
+  		
+        
+        /*pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
+        wakelock = pm.newWakeLock(
+        	     PowerManager.FULL_WAKE_LOCK |
+        	     PowerManager.ACQUIRE_CAUSES_WAKEUP |
+        	     PowerManager.ON_AFTER_RELEASE, "ScreenOn"); */
+        
+  		
+  		
+  		
+        
+        onNoff.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+								
+				if(service_check)
+					service_check=false;
+				else
+					service_check=true;
+				
+				if(service_check)
+				{
+					onNoff.setText("서비스 중지");
+					state.setText("서비스가 동작중입니다.");
+					SharedPreferences pref = getSharedPreferences("PrefTest",MODE_PRIVATE);
+			  		SharedPreferences.Editor editor = pref.edit();
+			  		editor.putBoolean("service_check", service_check);
+			   		editor.commit();
+					sm.start();
+					//진동 센서 동작부분
+			    	int delay = SensorManager.SENSOR_DELAY_UI;
+					mSm.registerListener(mSensorListener, 
+							mSm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), delay);
+					
+					if(doBackground)
+						startService(new Intent(self, Firstpage.class));
+						
+				}
+				else
+				{
+					onNoff.setText("서비스 시작");
+					state.setText("서비스가 정지중입니다.");
+					SharedPreferences pref = getSharedPreferences("PrefTest",MODE_PRIVATE);
+			  		SharedPreferences.Editor editor = pref.edit();
+					editor.putBoolean("service_check", service_check);
+			   		editor.commit();  
+					sm.stop();
+					mSm.unregisterListener(mSensorListener);
+					stopService(new Intent(self, Firstpage.class));
+					
+						
+				}
+			}
+		});
+        
+        
+        pref = getSharedPreferences("PrefTest", MODE_PRIVATE);
+       /* 
+        //문자메세지 내용
+        pref.getString("editText", "null");
+        
+        //전화번호
+        pref.getString("AllAddress", "null");
+        
+        //진동 민감도
+        pref.getInt("accelvalue", 10);
+        
+        //소리 민감도
+        pref.getInt("soundvalue", 80);
+        
+        //백그라운드체크
+        pref.getBoolean("back", false);
+        //내위치보내기체크
+        pref.getBoolean("location", false);
+        //발신전체크
+        pref.getBoolean("send", true);        	
+        //녹음하기체크
+        pref.getBoolean("rec", false);
+        //녹음시간 설정
+        pref.getInt("timevalue",10000);*/
+        
+      //녹음
+        mFilePath = SunUtil.makeDir("progress_recorder");
+        
+        mBtnStartRec = (Button) findViewById(R.id.btnStartRec);
+        mBtnStartPlay = (Button) findViewById(R.id.btnStartPlay);
+        mBtnStopPlay = (Button) findViewById(R.id.btnStopPlay);
+        mRecProgressBar = (SeekBar) findViewById(R.id.recProgressBar);
+        mPlayProgressBar = (SeekBar) findViewById(R.id.playProgressBar);
+        mTvPlayMaxPoint = (TextView) findViewById(R.id.tvPlayMaxPoint);
+        
+        mBtnStartRec.setOnClickListener(this);
+        mBtnStartPlay.setOnClickListener(this);
+        mBtnStopPlay.setOnClickListener(this);
+        
+        
+      //내위치보내기목록
+        locationManager=(LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        //위치정보 공급자 얻어오기 provider=null이라고 오류가 나오면 manifest에서 권한설정이 안되있는 것이다.
+        //공급자는 GPS, Network 둘중에 1가지로 String으로 들어온다.
+        locationProvider = locationManager.getBestProvider(new Criteria(), true);
+        Location location = locationManager.getLastKnownLocation(locationProvider);
+                
+        geocoder = new Geocoder(this, Locale.KOREA);
+        latPoint= location.getLatitude();
+    	lngPooint=location.getLongitude();
+        
+        
+        
+        
+    }
+    
+    @Override
+    protected void onPause() {    	
+    	/*if(ScreenReceiver.wasScreenOn||!ScreenReceiver.wasScreenOn)
+    	{
+    		Log.i("Tag", "screen turned off");
+    		Log.i("Tag", "powerCount"+powerCount);
+    		powerCount++;
+			if(powerCount>3)
+				powerCount=0;
+    		
+    	}*/
+    	
+    	super.onPause();
+    }
+    
+    @Override
+    protected void onResume() {
+    	//설정 초기화
+    	service_check = pref.getBoolean("service_check", false);
+  		
+  		//초기화
+  		if(service_check)
+		{
+			onNoff.setText("서비스 중지");
+			state.setText("서비스가 동작중입니다.");
+		}
+  		else
+  		{
+  			onNoff.setText("서비스 시작");
+			state.setText("서비스가 정지중입니다.");
+  		}
+    	
+    	
+    	//백그라운드체크
+        doBackground = pref.getBoolean("back", false);
+        //내위치보내기체크
+        domyLoc = pref.getBoolean("location", false);
+        //발신전체크
+        popupCheck = pref.getBoolean("send", false);        	
+        //녹음하기체크
+        doRecord = pref.getBoolean("rec", false);
+        //진동민감도
+        acceleroVolume = pref.getInt("accelvalue", 10);
+        //소리민감도
+        soundVolume = pref.getInt("soundvalue", 80);
+        //녹음시간설정
+        recTimeValue = pref.getInt("timevalue", 10000);
+        //딜레이시간설정
+        DELAYTIMEVALUE = pref.getInt("smsdelay", 10000);
+        
+        
+        
+    	/*//파워버튼 관여부분
+    	if(ScreenReceiver.wasScreenOn||!ScreenReceiver.wasScreenOn)
+    	{
+    		Log.i("Tag", "screen turned on");
+    		Log.i("Tag", "powerCount"+powerCount);
+    		if(powerCount==1)
+			{
+				Log.i("Tag", "timer start!");
+				this.timer = new Timer();
+			    timer.schedule(new Task(), 10);
+				
+				
+			}//end of if
+    	}*/
+    	
+    	super.onResume();
+    }
+    
+    //파워버튼 타이머
+   /* class Task extends TimerTask
+    {
+		@Override
+		public void run() {
+			handle.post(new Runnable(){
+
+				public void run() {
+					new CountDownTimer(2000, 500) {
+						
+						@Override
+						public void onTick(long millisUntilFinished) {
+						}
+						
+						@Override
+						public void onFinish() {
+							if(ScreenReceiver.smsActive)
+							{
+								if(SMSSendable==false)
+						    		return;
+								
+								//문자 전송 코드
+								if(popupCheck)
+								{
+									startActivityForResult(new Intent(self, CustDlg.class).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 1002);
+								}
+								else
+								{
+									sendSMS();
+								}
+							}
+							Log.i("Tag", "timer finish!");
+						}
+					}.start();
+				}
+			}); //end of runnable
+			
+		}
+    	
+    }*/
+    
+	
+    //메시지 전송 메소드
+    public void sendSMS()
+    {
+    	if(SMSSendable==false)
+    		return;
+    	
+    	
+    	final SmsManager sms = SmsManager.getDefault();
+    	
+    	Intent sentIndent = new Intent("ACTION_MSG_SENT");
+        final PendingIntent sentIndentPending = 
+        	PendingIntent.getBroadcast(this, 0, sentIndent, PendingIntent.FLAG_CANCEL_CURRENT);
+        
+        Intent receiptIndent  = new Intent("ACTION_MSG_RECEIPT");
+        final PendingIntent receiptIndentPending  = 
+        	PendingIntent.getBroadcast(this, 0, receiptIndent , PendingIntent.FLAG_CANCEL_CURRENT);
+       
+        
+        String message = pref.getString("editText", "긴급상황입니다 확인부탁드려요.");
+        
+     // 수신자 전화번호 얻어오기
+        String destination=pref.getString("AllAddress", null);
+        String destinations[]=null;
+        if(destination!=null)
+        {
+        	destinations=destination.split(",");
+	        for(int i=1 ; i<destinations.length ;i=i+2)
+	        {
+	        	sms.sendTextMessage(destinations[i], null,message, 
+	            		 sentIndentPending, receiptIndentPending);
+	        	
+	        }
+        }
+        else
+        {
+        	Toast.makeText(self, "긴급연락처에 저장된 사람이 없습니다.", Toast.LENGTH_SHORT).show();
+        	return;
+        }
+        
+        if(domyLoc)//위치보내기 체크 일경우
+        {  String str = "제 위치는 "+getKoreanAddress()+" 주변 입니다."; 
+    	
+        if(destination!=null)
+        {
+        	destinations=destination.split(",");
+	        for(int i=1 ; i<destinations.length ;i=i+2)
+	        {
+	        	sms.sendTextMessage(destinations[i], null,str, 
+	            		 sentIndentPending, receiptIndentPending);
+	        	
+	        }
+        }
+    }
+        if(doRecord==true)//녹음하기 체크 일경우
+        {	 sm.stop();		        					 					  
+		      mRecState = RECORDING;
+		      startRec();
+		      updateUI();
+		      System.out.println("녹음시작");
+		
+		      mBtnStartRec.setFocusable(false);
+		      mBtnStartRec.setClickable(false);
+		      
+		     
+		      
+		      new CountDownTimer(recTimeValue,recTimeValue) { //10000은 10초.
+				
+				@Override
+				public void onTick(long millisUntilFinished) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void onFinish() {
+					mRecState = REC_STOP;
+				      stopRec();
+				      updateUI();
+				      System.out.println("녹음끝");
+				      sm.start();
+				      mBtnStartRec.setFocusable(true);
+				      mBtnStartRec.setClickable(true);
+					
+				}
+			}.start();
+        }
+        
+        Log.i("Tag", "sms is sended!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        Toast.makeText(self, "메세지가 송신되었습니다.", Toast.LENGTH_SHORT).show();
+        SMSSendable=false;
+        
+        new CountDownTimer(DELAYTIMEVALUE,DELAYTIMEVALUE) {
+			@Override
+			public void onTick(long arg0) {
+			}
+			
+			@Override
+			public void onFinish() {
+				SMSSendable=true;
+				Log.i("Tag", "send ready!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+			}
+		}.start();
+    }
+    
+   
+    //파워, 진동 리스너, 사운드 리스너
+    SensorEventListener mSensorListener = new SensorEventListener() {
+		
+		public void onSensorChanged(SensorEvent event) {
+			// TODO Auto-generated method stub
+			if(SMSSendable==false)
+				return;
+			
+			//파워감지
+			//꺼졌을때
+			if(!ScreenReceiver.wasScreenOn)
+			{
+				Log.i("Tag", "!ScreenReceiver.wasScreenOn");
+				final CountDownTimer cdt = new CountDownTimer(2000, 10) {
+					@Override
+					public void onTick(long millisUntilFinished) {
+					}
+					
+					@Override
+					public void onFinish() {
+						if(ScreenReceiver.screenCount>=3)
+						{
+							smssendfrompower=true;
+							ScreenReceiver.screenCount=0;
+							cdtIsStarted=false;
+						}
+						else
+						{
+							cdtIsStarted=false;
+							smssendfrompower=false;
+						}
+					}
+				};
+
+				if(cdtIsStarted==true)
+				{
+					Log.i("Tag", "cdtIsStarted");
+					return;
+				}
+				else
+				{
+					Log.i("Tag", "notstart");
+				}
+				
+				cdtIsStarted=true;
+				cdt.start();
+				
+				
+			}
+			
+			//파워버튼으로 활성화 됐을때 문자 전송 
+			if(smssendfrompower)
+			{
+				Log.i("Tag", "sms");
+				if(popupCheck)
+				{
+					smssendfrompower=false;
+					startActivityForResult(new Intent(self, CustDlg.class).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 1002);
+				}
+				else
+				{
+					smssendfrompower=false;
+					sendSMS();
+				}
+				cdtIsStarted=false;
+			}
+			
+			
+			
+			//소리감지 부분
+			double cur_volume= sm.getAmplitude();
+			if(cur_volume>=soundVolume)
+			{
+				
+				if(soundavail>0)
+					return;
+				soundavail++;
+				//문자 전송
+				Log.i("Sound", soundVolume+"db 보다 큰소리 감지");
+				
+				//팝업체크후 문자 전송
+				if(popupCheck)
+				{
+					startActivityForResult(new Intent(self, CustDlg.class).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 1002);
+				}
+				else
+				{
+					sendSMS();
+					soundavail=0;
+				}
+				
+				/*if(doRecord==true)//녹음하기 체크 일경우
+		        {	 sm.stop();		        					 					  
+				      mRecState = RECORDING;
+				      startRec();
+				      updateUI();
+				      System.out.println("녹음시작");
+				
+				      mBtnStartRec.setFocusable(false);
+				      mBtnStartRec.setClickable(false);
+				      
+				     
+				      
+				      new CountDownTimer(recTimeValue,recTimeValue) { //10000은 10초.
+						
+						@Override
+						public void onTick(long millisUntilFinished) {
+							// TODO Auto-generated method stub
+							
+						}
+						
+						@Override
+						public void onFinish() {
+							mRecState = REC_STOP;
+						      stopRec();
+						      updateUI();
+						      System.out.println("녹음끝");
+						      sm.start();
+						      mBtnStartRec.setFocusable(true);
+						      mBtnStartRec.setClickable(true);
+							
+						}
+					}.start();
+		        }*/
+				
+				
+				
+			}
+			
+			float[] v = event.values;
+			
+			float i=0;
+			float j=0;
+			float k=0;
+			switch (event.sensor.getType()) {
+			
+			case Sensor.TYPE_ACCELEROMETER:
+				i=v[0];
+				j=v[1];
+				k=v[2];
+				break;
+			}
+			
+			float f1 = acceleroVolume;
+			float f2 = -acceleroVolume;
+			if(i<f1&&j>=f2)
+				return;
+			
+			if(accelavail>0)
+				return;
+			//팝업체크후 문자 전송
+			if(popupCheck)
+			{
+				accelavail++;
+				startActivityForResult(new Intent(self, CustDlg.class).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 1002);
+			}
+			else
+			{
+				sendSMS();
+				accelavail=0;
+			}
+			Log.i("Accel", "TYPE_ACCELEROMETER : x = " + i + " , y = " + j + " , z = " + k);
+			
+			//txt4.setText("데시벨 " + sm.getAmplitude());
+			//txt4.setText("데시벨 : " + sm.getAmplitude());
+			
+			
+		}
+		
+		public void onAccuracyChanged(Sensor sensor, int accuracy) {
+			// TODO Auto-generated method stub
+			
+		}
+	};
+	
+	 // 녹음기 버튼의 OnClick 이벤트 리스너 
+	  public void onClick(View v)
+	  {
+	    switch(v.getId())
+	    {
+	      case R.id.btnStartRec:
+	        mBtnStartRecOnClick();
+	        break;
+	      case R.id.btnStartPlay:
+	        mBtnStartPlayOnClick();
+	        break;
+	      case R.id.btnStopPlay:
+	        mBtnStopPlayOnClick();
+	        break;
+	      default:
+	        break;
+	    }
+	  }
+	  
+	  private void mBtnStartRecOnClick()
+	  {
+		  if(sm.isStarted()==false){
+	    if (mRecState == REC_STOP)
+	    {	Toast t =Toast.makeText(this, "녹음중에는 서비스를 이용할 수 없습니다.", 1);
+	    	t.setGravity(Gravity.TOP, 0, 300);
+	    	t.show();
+	      mRecState = RECORDING;
+	      startRec();
+	      onNoff.setClickable(false);
+	      onNoff.setFocusable(false);
+	      updateUI();
+	    }
+	    else if (mRecState == RECORDING)
+	    {
+	      mRecState = REC_STOP;
+	      stopRec();
+	      onNoff.setClickable(true);
+	      onNoff.setFocusable(true);
+	      updateUI();
+	      
+	    }  
+	  }	  
+		  else{
+			  Toast.makeText(this, "소리감지설정으로 실행불가.", 1).show();
+		  }
+		  
+	  }
+	  
+	  // 녹음시작
+	  private void startRec()
+	  {
+	    mCurRecTimeMs = 0;
+	    mCurProgressTimeDisplay = 0;
+	    
+	    // SeekBar의 상태를 0.1초후 체크 시작
+	    mProgressHandler.sendEmptyMessageDelayed(0, 100);
+	    
+	    if (mRecorder == null)
+	    {
+	      mRecorder = new MediaRecorder();
+	      mRecorder.reset();
+	    }
+	    else
+	    {
+	      mRecorder.reset();
+	    }
+	    
+	    try
+	    {
+	      mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+	      mRecorder.setOutputFormat(MediaRecorder.OutputFormat.RAW_AMR);
+	      mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+	      mRecorder.setOutputFile(mFilePath + mFileName);
+	      mRecorder.prepare();
+	      mRecorder.start();
+	    }
+	    catch (IllegalStateException e)
+	    {
+	      Toast.makeText(this, "IllegalStateException", 1).show();
+	    }
+	    catch (IOException e)
+	    {
+	      Toast.makeText(this, "IOException", 1).show();
+	    }
+	  }
+	  
+	  // 녹음정지
+	  private void stopRec()
+	  {
+	    try
+	    {
+	      mRecorder.stop();
+	    }
+	    catch(Exception e)
+	    {}
+	    finally
+	    {
+	      mRecorder.release();
+	      mRecorder = null;
+	    }
+	    
+	    mCurRecTimeMs = -999;
+	    // SeekBar의 상태를 즉시 체크  
+	    mProgressHandler.sendEmptyMessageDelayed(0, 0);
+	  }
+	  
+	  private void mBtnStartPlayOnClick()
+	  {
+	    if (mPlayerState == PLAY_STOP)
+	    {
+	      mPlayerState = PLAYING;
+	      initMediaPlayer();
+	      startPlay();
+	      updateUI();
+	    }
+	    else if (mPlayerState == PLAYING)
+	    {
+	      mPlayerState = PLAY_PAUSE;
+	      pausePlay();
+	      updateUI();
+	    }
+	    else if (mPlayerState == PLAY_PAUSE)
+	    {
+	      mPlayerState = PLAYING;
+	      startPlay();
+	      updateUI();
+	    }
+	  }
+	  
+	  private void mBtnStopPlayOnClick()
+	  {
+	    if (mPlayerState == PLAYING || mPlayerState == PLAY_PAUSE)
+	    {
+	      mPlayerState = PLAY_STOP;
+	      stopPlay();
+	      releaseMediaPlayer();
+	      updateUI();      
+	    }
+	  }
+	  
+	  private void initMediaPlayer()
+	  {
+	    // 미디어 플레이어 생성
+	    if (mPlayer == null)
+	      mPlayer = new MediaPlayer();
+	    else
+	      mPlayer.reset();
+	    
+	    mPlayer.setOnCompletionListener(this);
+	    String fullFilePath = mFilePath + mFileName;
+	    
+	    try
+	    {
+	      mPlayer.setDataSource(fullFilePath);
+	      mPlayer.prepare();   
+	      int point = mPlayer.getDuration();
+	      mPlayProgressBar.setMax(point);
+	      
+	      int maxMinPoint = point / 1000 / 60;
+	      int maxSecPoint = (point / 1000) % 60;
+	      String maxMinPointStr = "";
+	      String maxSecPointStr = "";
+	      
+	      if (maxMinPoint < 10)
+	        maxMinPointStr = "0" + maxMinPoint + ":";
+	      else
+	        maxMinPointStr = maxMinPoint + ":";
+	      
+	      if (maxSecPoint < 10)
+	        maxSecPointStr = "0" + maxSecPoint;
+	      else
+	        maxSecPointStr = String.valueOf(maxSecPoint);
+	      
+	      mTvPlayMaxPoint.setText(maxMinPointStr + maxSecPointStr);
+	      
+	      mPlayProgressBar.setProgress(0);
+	    }
+	    catch(Exception e)
+	    {
+	      Log.v("ProgressRecorder", "미디어 플레이어 Prepare Error ==========> " + e);
+	    }
+	  }
+	  
+	  // 재생 시작
+	  private void startPlay()
+	  {
+	    Log.v("ProgressRecorder", "startPlay().....");
+	    
+	    try
+	    {
+	      mPlayer.start();
+	      
+	      // SeekBar의 상태를 0.1초마다 체크      
+	      mProgressHandler2.sendEmptyMessageDelayed(0, 100);
+	    }
+	    catch (Exception e)
+	    {
+	      e.printStackTrace();
+	      Toast.makeText(this, "error : " + e.getMessage(), 0).show();
+	    }
+	  }
+	  
+	  private void pausePlay()
+	  {
+	    Log.v("ProgressRecorder", "pausePlay().....");
+	    
+	    // 재생을 일시 정지하고
+	    mPlayer.pause();
+	    
+	    // 재생이 일시정지되면 즉시 SeekBar 메세지 핸들러를 호출한다.
+	    mProgressHandler2.sendEmptyMessageDelayed(0, 0);
+	  }
+	  
+	  private void stopPlay()
+	  {
+	    Log.v("ProgressRecorder", "stopPlay().....");
+	    
+	    // 재생을 중지하고
+	    mPlayer.stop();
+	    
+	    // 즉시 SeekBar 메세지 핸들러를 호출한다. 
+	    mProgressHandler2.sendEmptyMessageDelayed(0, 0);
+	  }
+	  
+	  private void releaseMediaPlayer()
+	  {
+	    Log.v("ProgressRecorder", "releaseMediaPlayer().....");
+	    mPlayer.release();
+	    mPlayer = null;
+	    mPlayProgressBar.setProgress(0);
+	  }
+	  
+	  public void onCompletion(MediaPlayer mp)
+	  {
+	    mPlayerState = PLAY_STOP; // 재생이 종료됨
+
+	    // 재생이 종료되면 즉시 SeekBar 메세지 핸들러를 호출한다.
+	    mProgressHandler2.sendEmptyMessageDelayed(0, 0);
+	    
+	    updateUI();
+	  }
+	  
+	  private void updateUI()
+	  {
+	    if (mRecState == REC_STOP) 
+	    {
+	      mBtnStartRec.setText("녹음");
+	      mRecProgressBar.setProgress(0);
+	    }
+	    else if (mRecState == RECORDING)
+	      mBtnStartRec.setText("중단");
+	    
+	    if (mPlayerState == PLAY_STOP)
+	    {
+	      mBtnStartPlay.setText("재생");
+	      mPlayProgressBar.setProgress(0);
+	    }
+	    else if (mPlayerState == PLAYING)
+	      mBtnStartPlay.setText("멈춤");
+	    else if (mPlayerState == PLAY_PAUSE)
+	      mBtnStartPlay.setText("재생");
+	  }
+	
+	
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		// TODO Auto-generated method stub
+		super.onActivityResult(requestCode, resultCode, data);
+		switch(requestCode){
+		
+		case 1002:
+			if(resultCode==RESULT_OK)
+			{
+				sendSMS();
+				soundavail=0;
+				accelavail=0;
+			}
+			else
+			{
+				soundavail=0;
+				accelavail=0;
+			}
+			
+			if(smssendfrompower)
+			{
+				smssendfrompower=false;
+			}
+			if(cdtIsStarted)
+			{
+				cdtIsStarted=false;
+			}
+			break;
+		}
+				
+	}
+    
+    @Override
+    public void onBackPressed() {
+    	// TODO Auto-generated method stub
+    	Builder d = new AlertDialog.Builder(this);
+    	 
+		d.setMessage("정말 종료하시겠습니까?");
+ 
+		d.setPositiveButton("종료", new DialogInterface.OnClickListener() {
+
+			public void onClick(DialogInterface dialog, int which) { 
+				// process전체 종료 
+				finish(); 
+			} 
+		}); 
+		d.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+ 
+			public void onClick(DialogInterface dialog, int which) { 
+				dialog.cancel(); 
+			} 
+		});
+ 
+		d.show();
+    }
+
+    
+    
+}//end of act
